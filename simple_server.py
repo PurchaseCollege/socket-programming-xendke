@@ -4,6 +4,7 @@
 #    https://www.tutorialspoint.com/python/python_networking.htm  
 #    https://docs.python.org/3/library/sys.html
 #    https://docs.python.org/3/library/socket.html
+#    https://www.jmarshall.com/easy/http/
 import sys
 import socket
 
@@ -31,17 +32,14 @@ if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('google.com', 0))
     host_ip = s.getsockname()[0]
+    print("IP: ", host_ip)
     # 1. Create a socket
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # 2. "Bind" the socket to an IP and PORT
     my_socket.bind((host_ip, port))
-    print("Listening...")
     # 3. Begin "listening" on the socket
     my_socket.listen(5)
-    
-    #index_html = openFile("index.html") # load index and 404 pages
-    #four_oh_four = openFile("404.html")
-
+    print("Listening...")
     
     while(True): # keep accepting connections so that the server does not end after one "transaction"
         # 4. Begin "accepting" client connections
@@ -50,8 +48,6 @@ if __name__ == "__main__":
         data = ''
         data = conn.recv(1024)
         
-        #if not data: break # if data received is empty break out of loop, this should never break because we close connection later on
-
         data_string = str(data) # turn data to a string so we can more easily manipulate it
         print(data_string)
         
@@ -75,16 +71,18 @@ if __name__ == "__main__":
                     filename = get_string[5:i] # filename will be in the form "index.html" or "" in the case of "GET / HTTP.."
                     print(filename)
                     break
-
+                
+            # send basic HTTP header 
+            conn.sendall(str.encode("HTTP/1.1 200 OK\n\n"))
             # send the file named filename and close connection
             if(not filename): # if filename empty, send index.html
-                conn.sendall(openFile("index.html"))
-            else: # not empty
-                try:
-                    conn.sendall(openFile(filename)) # try to open filename and send
-                except (FileNotFoundError, IsADirectoryError): # catch: file not found error or filename is dir, send 404.html instead
-                    print("404")
-                    conn.sendall(openFile("404.html"))
+                filename = "index.html"
+            
+            try:
+                conn.sendall(openFile(filename)) # try to open filename and send
+            except (FileNotFoundError, IsADirectoryError): # catch: file not found error or filename is dir, send 404.html instead
+                print("404")
+                conn.sendall(openFile("404.html"))
             
         conn.close()
 	    
