@@ -40,7 +40,6 @@ if __name__ == "__main__":
     # 3. Begin "listening" on the socket
     my_socket.listen(5)
     print("Listening...")
-    
     while(True): # keep accepting connections so that the server does not end after one "transaction"
         # 4. Begin "accepting" client connections
         conn, addr = my_socket.accept()
@@ -72,17 +71,26 @@ if __name__ == "__main__":
                     print(filename)
                     break
                 
-            # send basic HTTP header 
-            conn.sendall(str.encode("HTTP/1.1 200 OK\n\n"))
-            # send the file named filename and close connection
-            if(not filename): # if filename empty, send index.html
+            if(not filename): # if filename is empty
                 filename = "index.html"
+
+            header = "" # http header we will send
             
             try:
-                conn.sendall(openFile(filename)) # try to open filename and send
-            except (FileNotFoundError, IsADirectoryError): # catch: file not found error or filename is dir, send 404.html instead
-                print("404")
-                conn.sendall(openFile("404.html"))
+                file = openFile(filename) # try to open file of "filename"
+                header += "HTTP/1.1 200 OK\n" # file opened successfully 200 OK
+            except (FileNotFoundError, IsADirectoryError): # catch: file not found error or filename is dir, open 404.html instead
+                header += "HTTP/1.1 404 Not Found\n" # file did not open successfully 404 Not Found
+                filename = "404.html"
+                file = openFile(filename)
+
+            # add more header info
+            header += "Server: C4WS\n" # HTTP header field: Server - Name of Server
+            header += "\n"
+                
+            # send header and file 
+            conn.sendall(str.encode(header))
+            conn.sendall(file)
             
         conn.close()
 	    
