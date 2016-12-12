@@ -6,6 +6,7 @@
 #    https://docs.python.org/3/library/socket.html
 #    https://www.jmarshall.com/easy/http/
 import sys, socket, mimetypes
+from datetime import datetime, timezone
 
 root = "root/" # the root folder for where the available files to serve are stored
 
@@ -77,23 +78,24 @@ if __name__ == "__main__":
             header = "" # http header we will send
 
             try:
-                file = openFile(filename) # try to open file of "filename"
+                file_requested = openFile(filename) # try to open file of "filename"
                 header += "HTTP/1.1 200 OK\n" # file opened successfully 200 OK
             except (FileNotFoundError, IsADirectoryError): # catch: file not found error or filename is dir, open 404.html instead
                 header += "HTTP/1.1 404 Not Found\n" # file did not open successfully 404 Not Found
                 filename = "404.html"
-                file = openFile(filename)
+                file_requested = openFile(filename)
 
             # mimetype for Content-Type header field
             mimetype = mimetypes.guess_type(filename) # returns tuple in the form ("text/html", encoding)
 
             # add more header info
             header += "Content-Type: " + mimetype[0] + "\n"
+            header += datetime.now(timezone.utc).strftime("Date: %a, %d %b %Y %H:%M:%S GMT") + "\n"
             header += "Server: C4WS\n" # HTTP header field: Server - Name of Server
             header += "\n"
 
             # send header and file
             conn.sendall(str.encode(header))
-            conn.sendall(file)
+            conn.sendall(file_requested)
 
         conn.close()
